@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Grupos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 50px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #grupos {
+      margin-top: 20px;
+    }
+
+    #pessoasInput {
+      width: 80%;
+      height: 100px;
+      margin-top: 10px;
+      resize: vertical;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Gerador de Grupos</h1>
+  <label for="pessoasInput">Digite as pessoas (separadas por vírgula), caso seja um casal coloque juntos (Ex: Eduardo e
+    Flávia, Evandro e Luciana):</label>
+  <br>
+  <textarea id="pessoasInput" placeholder="Ex: João, Maria, José, ..."></textarea>
+  <br>
+  <br>
+  <br>
+  <button onclick="gerarGrupos()">Gerar Grupos</button>
+  <div id="info"></div>
+  <div id="grupos"></div>
+
+  <script>
+    function gerarGrupos() {
+      const tamanhoMinimoGrupo = 5;
+      const pessoasInput = document.getElementById('pessoasInput').value;
+
+      // Verifica se o input não está vazio
+      if (!pessoasInput.trim()) {
+        alert('Digite as pessoas separadas por vírgula no campo de entrada.');
+        return;
+      }
+
+      // Converte a string de pessoas em um array
+      const pessoasFicticias = pessoasInput.split(',').map(pessoa => pessoa.trim());
+
+      // Embaralha a lista de pessoas fictícias
+      const pessoasEmbaralhadas = shuffle([ ...pessoasFicticias ]);
+
+      // Divide as pessoas em grupos, garantindo que cada grupo tenha pelo menos 5 pessoas
+      const grupos = [];
+      for (let i = 0; i < pessoasFicticias.length; i += tamanhoMinimoGrupo) {
+        const grupo = pessoasEmbaralhadas.slice(i, i + tamanhoMinimoGrupo);
+        grupos.push(grupo);
+      }
+
+      // Exibe os grupos e a quantidade total de pessoas na página
+      exibirInfo(pessoasFicticias.length);
+      exibirGrupos(grupos);
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [ array[ i ], array[ j ] ] = [ array[ j ], array[ i ] ];
+      }
+      return array;
+    }
+
+    function exibirInfo(totalPessoas) {
+      const infoContainer = document.getElementById('info');
+      infoContainer.innerHTML = `<p>Total de pessoas: ${ totalPessoas }</p>`;
+    }
+
+    function exibirGrupos(grupos) {
+      const gruposContainer = document.getElementById('grupos');
+      gruposContainer.innerHTML = '';
+
+      grupos.forEach((grupo, index) => {
+        const grupoDiv = document.createElement('div');
+        grupoDiv.innerHTML = `<strong>Grupo ${ index + 1 }:</strong> ${ grupo.join(', ') }`;
+        gruposContainer.appendChild(grupoDiv);
+      });
+    }
+  </script>
+</body>
+
+</html>
