@@ -22,9 +22,27 @@
       margin-top: 20px;
     }
 
-    #pessoasInput {
-      width: 80%;
-      height: 100px;
+    /* Adiciona estilo para os campos de entrada */
+    #configuracoesGrupos {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      /* Espaçamento entre os elementos */
+    }
+
+    #configuracoesGrupos>div {
+      flex: 1;
+      min-width: 140px;
+      /* Garante que no celular os campos não fiquem muito estreitos */
+    }
+
+    /* Estilização para as caixas de texto e números */
+    textarea,
+    input[type="number"] {
+      width: 100%;
+      /* Faz com que os campos ocupem todo o espaço do container */
+      padding: 10px;
       margin-top: 10px;
       resize: vertical;
     }
@@ -33,11 +51,28 @@
 
 <body>
   <h1>Gerador de Grupos</h1>
-  <label for="pessoasInput">Digite as pessoas (separadas por vírgula), caso seja um casal coloque juntos (Ex: Eduardo e
-    Flávia, Evandro e Luciana):</label>
+  <label for="pessoasInput">Digite os nomes (use " e " entre nomes para indicar casais):</label>
   <br>
-  <textarea id="pessoasInput" placeholder="Ex: João, Maria, José, ..."></textarea>
+  <textarea id="pessoasInput" placeholder="Ex: Lucas e Pâmela, João, Maria, José e Ana, ..."></textarea>
   <br>
+
+  <div id="configuracoesGrupos">
+    <div>
+      <label for="numeroGruposInput">Quantidade de Grupos:</label>
+      <br>
+      <input type="number" id="numeroGruposInput" value="6" min="1">
+    </div>
+    <div>
+      <label for="minimoPessoasInput">Quantidade Mínima de Pessoas por Grupo:</label>
+      <br>
+      <input type="number" id="minimoPessoasInput" value="5" min="1">
+    </div>
+    <div>
+      <label for="maximoPessoasInput">Quantidade Máxima de Pessoas por Grupo:</label>
+      <br>
+      <input type="number" id="maximoPessoasInput" value="6" min="1">
+    </div>
+  </div>
   <br>
   <br>
   <button onclick="gerarGrupos()">Gerar Grupos</button>
@@ -46,30 +81,55 @@
 
   <script>
     function gerarGrupos() {
-      const tamanhoMinimoGrupo = 5;
+      const numeroGrupos = parseInt(document.getElementById('numeroGruposInput').value);
+      const tamanhoMinimoGrupo = parseInt(document.getElementById('minimoPessoasInput').value);
+      const tamanhoMaximoGrupo = parseInt(document.getElementById('maximoPessoasInput').value);
+
       const pessoasInput = document.getElementById('pessoasInput').value;
 
-      // Verifica se o input não está vazio
       if (!pessoasInput.trim()) {
-        alert('Digite as pessoas separadas por vírgula no campo de entrada.');
+        alert('Preencha o campo de entrada.');
         return;
       }
 
-      // Converte a string de pessoas em um array
-      const pessoasFicticias = pessoasInput.split(',').map(pessoa => pessoa.trim());
+      const entradas = pessoasInput.split(',').map(entrada => entrada.trim());
+      let totalPessoas = 0;
+      const grupos = Array.from({ length: numeroGrupos }, () => []);
 
-      // Embaralha a lista de pessoas fictícias
-      const pessoasEmbaralhadas = shuffle([ ...pessoasFicticias ]);
+      // Calcula o total de pessoas considerando casais como duas pessoas
+      entradas.forEach(entrada => {
+        totalPessoas += entrada.includes(' e ') ? 2 : 1;
+      });
 
-      // Divide as pessoas em grupos, garantindo que cada grupo tenha pelo menos 5 pessoas
-      const grupos = [];
-      for (let i = 0; i < pessoasFicticias.length; i += tamanhoMinimoGrupo) {
-        const grupo = pessoasEmbaralhadas.slice(i, i + tamanhoMinimoGrupo);
-        grupos.push(grupo);
+      if (totalPessoas < tamanhoMinimoGrupo * numeroGrupos) {
+        alert(`Insira pelo menos ${ tamanhoMinimoGrupo * numeroGrupos } pessoas para formar ${ numeroGrupos } grupos.`);
+        return;
       }
 
-      // Exibe os grupos e a quantidade total de pessoas na página
-      exibirInfo(pessoasFicticias.length);
+      const entradasEmbaralhadas = shuffle(entradas);
+
+      // Redistribui a lógica para garantir que casais sejam alocados sem exceder o limite
+      entradasEmbaralhadas.forEach(entrada => {
+        const isCasal = entrada.includes(' e ');
+        let adicionado = false;
+
+        for (let i = 0; i < grupos.length && !adicionado; i++) {
+          const grupoAtual = grupos[ i ];
+          const tamanhoGrupoAtual = grupoAtual.reduce((acc, curr) => acc + (curr.includes(' e ') ? 2 : 1), 0);
+
+          if ((tamanhoGrupoAtual + (isCasal ? 2 : 1)) <= tamanhoMaximoGrupo) {
+            grupoAtual.push(entrada);
+            adicionado = true;
+          }
+        }
+
+        // Se não foi possível adicionar em nenhum grupo existente (e.g., todos estão cheios), tenta criar um novo grupo
+        if (!adicionado) {
+          alert("Não foi possível alocar todos sem exceder o limite máximo de pessoas por grupo.");
+        }
+      });
+
+      exibirInfo(totalPessoas);
       exibirGrupos(grupos);
     }
 
@@ -91,9 +151,11 @@
       gruposContainer.innerHTML = '';
 
       grupos.forEach((grupo, index) => {
-        const grupoDiv = document.createElement('div');
-        grupoDiv.innerHTML = `<strong>Grupo ${ index + 1 }:</strong> ${ grupo.join(', ') }`;
-        gruposContainer.appendChild(grupoDiv);
+        if (grupo.length > 0) { // Verifica se o grupo tem membros antes de exibir
+          const grupoDiv = document.createElement('div');
+          grupoDiv.innerHTML = `<strong>Grupo ${ index + 1 }:</strong> ${ grupo.join(', ') }`;
+          gruposContainer.appendChild(grupoDiv);
+        }
       });
     }
   </script>
